@@ -63,20 +63,62 @@ angular.module("ShortlyApp", ['ngRoute'])
 })
 .controller('statsController', function($scope, $http, $routeParams){
   $scope.rawdata = {};
+  $scope.displayData = {};
   $scope.linkId = $routeParams;
-
+  $scope.graphObject = [];
   $http({
     method: 'GET',
     url: '/clicks/'+$scope.linkId.linkId
   })
-  .then(function(res){
-    debugger; 
+  .then(function(res){ 
+    console.log(res);
     $scope.rawdata = res.data;
   })
   .then(function(){
-    console.log($scope.rawdata);
+    var origin = new Date ($scope.rawdata[0].created_at);
+    var current = 0;
+    var timeElapsed = 0;
+    var group = 0;
+    debugger;
+    _.each($scope.rawdata, function(click){
+      current = new Date (click.created_at);
+      timeElapsed = (current - origin) / 1000 / 60;
+      //change 5 to a variable to get different minute groupings.
+      group = Math.ceil(timeElapsed/5);
+      $scope.displayData[group] ? $scope.displayData[group]++ : $scope.displayData[group] = 1;
+    })
+    var time;
+    var graphValues= [];
+    _.each($scope.displayData, function(value, key){
+      time = origin + (parseInt(key)*1000*60*5);
+      graphValues.push({'label': ""+time, 'value': value});
+    })
+    $scope.graphObject = [{'key':"Cumulative Return", 'values': graphValues }];
+    console.log($scope.graphObject);
+
+    nv.addGraph(function() {
+    var chart = nv.models.discreteBarChart()
+        .x(function(d) { return d.label })
+         .y(function(d) { return d.value })
+         .staggerLabels(true)
+         .tooltips(false)
+         .showValues(true)
+   
+     d3.select('#chart svg')
+         .datum($scope.graphObject)
+       .transition().duration(500)
+         .call(chart);
+   
+     nv.utils.windowResize(chart.update);
+   
+     return chart;
+   });
+    
   })
   .catch(function(res){
     console.log(res);
   })
+
+  
+   
 });

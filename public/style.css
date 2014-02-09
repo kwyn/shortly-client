@@ -142,6 +142,10 @@ img.spinner {
   display: none;
 }
 
+#chart svg {
+  height: 400px;
+}
+
 img.plus {
   height: 50px;
   width: 50px;
